@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Apsara Closet Brand Colors */
+  --color-primary-50: #faf5ff;
+  --color-primary-100: #f3e8ff;
+  --color-primary-200: #e9d5ff;
+  --color-primary-300: #d8b4fe;
+  --color-primary-400: #c084fc;
+  --color-primary-500: #a855f7;
+  --color-primary-600: #9333ea;
+  --color-primary-700: #7e22ce;
+  --color-primary-800: #6b21a8;
+  --color-primary-900: #581c87;
+  
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  
+  /* Custom Font */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Base Styles */
+body {
+  font-family: var(--font-sans);
+  @apply text-gray-900;
+}
+
+/* Custom Component Classes */
+.btn-primary {
+  @apply bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 
+         transition-colors font-medium shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 
+         transition-colors font-medium;
+}
+
+.btn-outline {
+  @apply border-2 border-primary-500 text-primary-600 px-6 py-3 rounded-lg 
+         hover:bg-primary-50 transition-colors font-medium;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow;
+}
+
+.input-field {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+         focus:ring-primary-500 focus:border-transparent outline-none transition;
+}
+
+.input-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

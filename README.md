@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # 🌟 Apsara Closet
 
@@ -40,3 +41,7 @@ See individual README files in each service folder.
 ## 📄 License
 
 MIT
+=======
+# apsara-closet
+AI-Powered Fashion E-commerce Platform - Bachelor Thesis Project
+>>>>>>> 4d9757279196bdde5a4630944b15a4c7ff54acdb

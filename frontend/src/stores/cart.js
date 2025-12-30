@@ -1,59 +1,117 @@
 import { defineStore } from 'pinia'
+import { cartAPI } from '../services/apiService'
+import { useAuthStore } from './auth'
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: JSON.parse(localStorage.getItem('cart')) || []
+    items: [],
+    loading: false,
+    summary: {
+      itemCount: 0,
+      totalItems: 0,
+      subtotal: 0,
+      total: 0
+    }
   }),
   
   getters: {
-    itemCount: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
-    totalPrice: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
-    getItems: (state) => state.items
+    itemCount: (state) => state.items.length,
+    totalPrice: (state) => state.summary.total,
+    hasItems: (state) => state.items.length > 0,
   },
   
   actions: {
-    addItem(product, quantity = 1) {
-      const existingItem = this.items.find(item => item.id === product.id)
+    async fetchCart() {
+      const authStore = useAuthStore()
       
-      if (existingItem) {
-        existingItem.quantity += quantity
-      } else {
-        this.items.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.images[0],
-          quantity
-        })
+      if (!authStore.isAuthenticated) {
+        this.items = []
+        return
       }
       
-      this.saveToLocalStorage()
+      try {
+        this.loading = true
+        const response = await cartAPI.get()
+        this.items = response.data.cartItems
+        this.summary = response.data.summary
+      } catch (error) {
+        console.error('Failed to fetch cart:', error)
+      } finally {
+        this.loading = false
+      }
     },
     
-    updateQuantity(itemId, quantity) {
-      const item = this.items.find(item => item.id === itemId)
-      if (item) {
-        item.quantity = quantity
-        if (item.quantity <= 0) {
-          this.removeItem(itemId)
-        } else {
-          this.saveToLocalStorage()
+    async addItem(product, quantity = 1, options = {}) {
+      const authStore = useAuthStore()
+      
+      if (!authStore.isAuthenticated) {
+        alert('Please login to add items to cart')
+        return { success: false }
+      }
+      
+      try {
+        await cartAPI.add({
+          productId: product.id,
+          quantity,
+          size: options.size || null,
+          color: options.color || null,
+        })
+        
+        await this.fetchCart()
+        return { success: true }
+      } catch (error) {
+        console.error('Failed to add to cart:', error)
+        return { 
+          success: false, 
+          error: error.response?.data?.error || 'Failed to add to cart' 
         }
       }
     },
     
-    removeItem(itemId) {
-      this.items = this.items.filter(item => item.id !== itemId)
-      this.saveToLocalStorage()
+    async updateQuantity(itemId, quantity) {
+      if (quantity < 1) {
+        return this.removeItem(itemId)
+      }
+      
+      try {
+        await cartAPI.update(itemId, { quantity })
+        await this.fetchCart()
+        return { success: true }
+      } catch (error) {
+        console.error('Failed to update cart:', error)
+        return { 
+          success: false, 
+          error: error.response?.data?.error || 'Failed to update cart' 
+        }
+      }
     },
     
-    clearCart() {
-      this.items = []
-      this.saveToLocalStorage()
+    async removeItem(itemId) {
+      try {
+        await cartAPI.remove(itemId)
+        await this.fetchCart()
+        return { success: true }
+      } catch (error) {
+        console.error('Failed to remove item:', error)
+        return { success: false }
+      }
     },
     
-    saveToLocalStorage() {
-      localStorage.setItem('cart', JSON.stringify(this.items))
+    async clearCart() {
+      try {
+        await cartAPI.clear()
+        this.items = []
+        this.summary = {
+          itemCount: 0,
+          totalItems: 0,
+          subtotal: 0,
+          total: 0
+        }
+        return { success: true }
+      } catch (error) {
+        console.error('Failed to clear cart:', error)
+        return { success: false }
+      }
     }
   }
 })

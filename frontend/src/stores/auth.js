@@ -1,74 +1,85 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { authAPI } from '../services/apiService'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null,
+    user: JSON.parse(localStorage.getItem('user')) || null,
     token: localStorage.getItem('token') || null,
-    isAdmin: localStorage.getItem('isAdmin') === 'true'
   }),
   
   getters: {
     isAuthenticated: (state) => !!state.token,
-    getUser: (state) => state.user
+    isAdmin: (state) => state.user?.isAdmin || false,
+    fullName: (state) => state.user ? `${state.user.firstName} ${state.user.lastName}` : '',
   },
   
   actions: {
     async login(email, password) {
       try {
-        const response = await axios.post('http://localhost:3000/api/auth/login', {
-          email,
-          password
-        })
+        const response = await authAPI.login({ email, password })
         
         this.token = response.data.token
         this.user = response.data.user
-        this.isAdmin = response.data.user.isAdmin
         
+        // Save to localStorage
         localStorage.setItem('token', this.token)
-        localStorage.setItem('isAdmin', this.isAdmin)
+        localStorage.setItem('user', JSON.stringify(this.user))
         
-        // Set default axios header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
-        
-        return true
+        return { success: true }
       } catch (error) {
         console.error('Login failed:', error)
-        return false
+        return { 
+          success: false, 
+          error: error.response?.data?.error || 'Login failed' 
+        }
       }
     },
     
     async register(userData) {
       try {
-        const response = await axios.post('http://localhost:3000/api/auth/register', userData)
-        return true
+        await authAPI.register(userData)
+        return { success: true }
       } catch (error) {
         console.error('Registration failed:', error)
-        return false
+        return { 
+          success: false, 
+          error: error.response?.data?.error || 'Registration failed' 
+        }
+      }
+    },
+    
+    async fetchProfile() {
+      try {
+        const response = await authAPI.getProfile()
+        this.user = response.data.user
+        localStorage.setItem('user', JSON.stringify(this.user))
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+        this.logout()
+      }
+    },
+    
+    async updateProfile(data) {
+      try {
+        const response = await authAPI.updateProfile(data)
+        this.user = response.data.user
+        localStorage.setItem('user', JSON.stringify(this.user))
+        return { success: true }
+      } catch (error) {
+        console.error('Update profile failed:', error)
+        return { 
+          success: false, 
+          error: error.response?.data?.error || 'Update failed' 
+        }
       }
     },
     
     logout() {
       this.user = null
       this.token = null
-      this.isAdmin = false
-      
       localStorage.removeItem('token')
-      localStorage.removeItem('isAdmin')
-      
-      delete axios.defaults.headers.common['Authorization']
-    },
-    
-    async fetchUser() {
-      if (this.token) {
-        try {
-          const response = await axios.get('http://localhost:3000/api/auth/profile')
-          this.user = response.data
-        } catch (error) {
-          console.error('Failed to fetch user:', error)
-          this.logout()
-        }
-      }
+      localStorage.removeItem('user')
+      localStorage.removeItem('cart') // Clear cart too
     }
   }
 })

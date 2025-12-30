@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Uploads & temp
+uploads/
+temp/
+*.jpg
+*.jpeg
+*.png
+*.webp
+
+# Models
+*.h5
+*.pb
+models/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env
+.env.local
+.env.*.local

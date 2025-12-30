@@ -42,7 +42,7 @@ async function main() {
   
   console.log('✅ Created category:', tops.name)
 
-  // Create products
+  // Create products (with isActive: true!)
   const product1 = await prisma.product.create({
     data: {
       name: 'Elegant Summer Dress',
@@ -52,6 +52,9 @@ async function main() {
       images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800'],
       categoryId: dresses.id,
       stock: 10,
+      isActive: true,  // ← EXPLICITLY SET TO TRUE
+      colors: ['Blue', 'Pink', 'White'],
+      sizes: ['XS', 'S', 'M', 'L', 'XL'],
     }
   })
   
@@ -66,10 +69,47 @@ async function main() {
       images: ['https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=800'],
       categoryId: tops.id,
       stock: 25,
+      isActive: true,  // ← EXPLICITLY SET TO TRUE
+      colors: ['White', 'Cream', 'Light Blue'],
+      sizes: ['XS', 'S', 'M', 'L', 'XL'],
     }
   })
   
   console.log('✅ Created product:', product2.name)
+
+  const product3 = await prisma.product.create({
+    data: {
+      name: 'Floral Maxi Dress',
+      slug: 'floral-maxi-dress',
+      description: 'Beautiful floral print maxi dress for special occasions',
+      price: 129.99,
+      images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800'],
+      categoryId: dresses.id,
+      stock: 8,
+      isActive: true,  // ← EXPLICITLY SET TO TRUE
+      colors: ['Floral Blue', 'Floral Red'],
+      sizes: ['S', 'M', 'L'],
+    }
+  })
+  
+  console.log('✅ Created product:', product3.name)
+
+  const product4 = await prisma.product.create({
+    data: {
+      name: 'Casual Striped Top',
+      slug: 'casual-striped-top',
+      description: 'Comfortable striped top perfect for everyday wear',
+      price: 35.99,
+      images: ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800'],
+      categoryId: tops.id,
+      stock: 30,
+      isActive: true,  // ← EXPLICITLY SET TO TRUE
+      colors: ['Navy', 'Red', 'Black'],
+      sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    }
+  })
+  
+  console.log('✅ Created product:', product4.name)
 
   console.log('🎉 Seeding completed!')
 }

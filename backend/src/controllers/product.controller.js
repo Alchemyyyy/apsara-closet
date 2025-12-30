@@ -8,32 +8,41 @@ export const getAllProducts = async (req, res) => {
       search, 
       minPrice, 
       maxPrice, 
-      isActive = true,
+      isActive, // Don't default to true
       page = 1, 
       limit = 12 
     } = req.query
 
     // Build filter conditions
-    const where = {
-      isActive: isActive === 'true',
-      ...(category && { categoryId: category }),
-      ...(search && {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ]
-      }),
-      ...(minPrice || maxPrice) && {
-        price: {
-          ...(minPrice && { gte: parseFloat(minPrice) }),
-          ...(maxPrice && { lte: parseFloat(maxPrice) }),
-        }
-      }
+    const where = {}
+    
+    // Only filter by isActive if explicitly provided
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true'
+    }
+    
+    if (category) {
+      where.categoryId = category
+    }
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    
+    if (minPrice || maxPrice) {
+      where.price = {}
+      if (minPrice) where.price.gte = parseFloat(minPrice)
+      if (maxPrice) where.price.lte = parseFloat(maxPrice)
     }
 
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const take = parseInt(limit)
+
+    console.log('Products query where:', JSON.stringify(where, null, 2))
 
     // Get products and total count
     const [products, total] = await Promise.all([
@@ -54,6 +63,8 @@ export const getAllProducts = async (req, res) => {
       }),
       prisma.product.count({ where })
     ])
+
+    console.log(`Found ${products.length} products (total: ${total})`)
 
     res.json({
       products,

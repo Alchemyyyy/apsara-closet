@@ -11,6 +11,7 @@ import productRoutes from './src/routes/product.routes.js'
 import categoryRoutes from './src/routes/category.routes.js'
 import cartRoutes from './src/routes/cart.routes.js'
 import orderRoutes from './src/routes/order.routes.js'
+import aiRoutes from './src/routes/ai.routes.js'
 
 dotenv.config()
 
@@ -37,6 +38,7 @@ app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/ai', aiRoutes)
 
 // Health check
 app.get('/health', (req, res) => {
@@ -67,9 +69,10 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`🚀 Apsara Closet API running on http://localhost:${PORT}`)
+  console.log(`�� Apsara Closet API running on http://localhost:${PORT}`)
   console.log(`📝 Environment: ${process.env.NODE_ENV}`)
   console.log(`🗄️  Database: Connected`)
+  console.log(`🤖 AI Service: ${process.env.AI_SERVICE_URL || 'http://localhost:8000'}`)
   console.log('')
   console.log('📋 Available Routes:')
   console.log('   Auth:       /api/auth/*')
@@ -77,4 +80,5 @@ app.listen(PORT, () => {
   console.log('   Categories: /api/categories/*')
   console.log('   Cart:       /api/cart/*')
   console.log('   Orders:     /api/orders/*')
+  console.log('   AI:         /api/ai/*')
 })

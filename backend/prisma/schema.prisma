@@ -23,6 +23,8 @@ model User {
   cart          CartItem[]
   orders        Order[]
   addresses     Address[]
+  reviews       Review[]
+  wishlist      WishlistItem[]
   
   @@map("users")
 }
@@ -56,14 +58,76 @@ model Product {
   sizes       String[] @default([])
   isActive    Boolean  @default(true)
   views       Int      @default(0)
+  
+  // Rating stats
+  averageRating Float   @default(0)
+  totalReviews  Int     @default(0)
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   // Relations
   cartItems   CartItem[]
   orderItems  OrderItem[]
+  aiFeatures  ProductFeatures[]
+  reviews     Review[]
+  wishlistItems WishlistItem[]
   
   @@map("products")
+}
+
+// Product Features (AI)
+model ProductFeatures {
+  id         String   @id @default(uuid())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  imageUrl   String
+  features   Json
+  createdAt  DateTime @default(now())
+  
+  @@index([productId])
+  @@map("product_features")
+}
+
+// Reviews
+model Review {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  
+  rating    Int      // 1-5 stars
+  title     String?
+  comment   String   @db.Text
+  images    String[] @default([])
+  
+  // Metadata
+  verifiedPurchase Boolean @default(false)
+  helpful          Int     @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+// Wishlist
+model WishlistItem {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_items")
 }
 
 // Cart Items

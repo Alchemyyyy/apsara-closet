@@ -16,6 +16,7 @@ import productFeaturesRoutes from './src/routes/productFeatures.routes.js'
 import addressRoutes from './src/routes/address.routes.js'
 import reviewRoutes from './src/routes/review.routes.js'
 import wishlistRoutes from './src/routes/wishlist.routes.js'
+import analyticsRoutes from './src/routes/analytics.routes.js'
 
 dotenv.config()
 
@@ -47,6 +48,7 @@ app.use('/api/product-features', productFeaturesRoutes)
 app.use('/api/addresses', addressRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/wishlist', wishlistRoutes)
+app.use('/api/analytics', analyticsRoutes)
 
 // Health check
 app.get('/health', (req, res) => {
@@ -93,4 +95,5 @@ app.listen(PORT, () => {
   console.log('   Addresses:        /api/addresses/*')
   console.log('   Reviews:          /api/reviews/*')
   console.log('   Wishlist:         /api/wishlist/*')
+  console.log('   Analytics:        /api/analytics/*')
 })

@@ -1,24 +1,36 @@
 import express from 'express'
 import {
-  getDashboardStats,
-  getSalesStats,
-  getProductStats,
-  getCustomerStats,
-  getOrderStats,
-  getRevenueTrends
+  getOverview,
+  getSalesData,
+  getTopProducts,
+  getRecentOrders,
+  getUserStats,
+  getRevenueByCategory
 } from '../controllers/analytics.controller.js'
 import { authenticate, requireAdmin } from '../middleware/auth.middleware.js'
 
 const router = express.Router()
 
-// All routes require admin authentication
-router.use(authenticate, requireAdmin)
+// All analytics routes require admin authentication
+router.use(authenticate)
+router.use(requireAdmin)
 
-router.get('/dashboard', getDashboardStats)
-router.get('/sales', getSalesStats)
-router.get('/products', getProductStats)
-router.get('/customers', getCustomerStats)
-router.get('/orders', getOrderStats)
-router.get('/revenue-trends', getRevenueTrends)
+// Dashboard overview
+router.get('/overview', getOverview)
+
+// Sales chart data
+router.get('/sales', getSalesData)
+
+// Top selling products
+router.get('/top-products', getTopProducts)
+
+// Recent orders
+router.get('/recent-orders', getRecentOrders)
+
+// User statistics
+router.get('/users', getUserStats)
+
+// Revenue by category
+router.get('/revenue-by-category', getRevenueByCategory)
 
 export default router

@@ -28,6 +28,12 @@ const routes = [
     component: () => import('../views/Cart.vue')
   },
   {
+    path: '/wishlist',
+    name: 'Wishlist',
+    component: () => import('../views/Wishlist.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('../views/Login.vue')
@@ -53,7 +59,14 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  }
 })
 
 // Navigation guard for authentication

@@ -17,13 +17,14 @@ export const useAuthStore = defineStore('auth', {
     async login(email, password) {
       try {
         const response = await authAPI.login({ email, password })
-        
+    
         this.token = response.data.token
         this.user = response.data.user
         
         // Save to localStorage
         localStorage.setItem('token', this.token)
         localStorage.setItem('user', JSON.stringify(this.user))
+        localStorage.setItem('isAdmin', String(this.user.isAdmin))  // ← THIS LINE
         
         return { success: true }
       } catch (error) {
@@ -53,6 +54,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await authAPI.getProfile()
         this.user = response.data.user
         localStorage.setItem('user', JSON.stringify(this.user))
+        localStorage.setItem('isAdmin', String(this.user.isAdmin))  // ← Added this
       } catch (error) {
         console.error('Failed to fetch profile:', error)
         this.logout()
@@ -64,6 +66,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await authAPI.updateProfile(data)
         this.user = response.data.user
         localStorage.setItem('user', JSON.stringify(this.user))
+        localStorage.setItem('isAdmin', String(this.user.isAdmin))  // ← Added this
         return { success: true }
       } catch (error) {
         console.error('Update profile failed:', error)
@@ -79,6 +82,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      localStorage.removeItem('isAdmin')  // ← Added this
       localStorage.removeItem('cart') // Clear cart too
     }
   }

@@ -3,27 +3,12 @@ import prisma from '../utils/prisma.js'
 // Get user's wishlist
 export const getWishlist = async (req, res) => {
   try {
-    const wishlistItems = await prisma.wishlistItem.findMany({
+    const wishlist = await prisma.wishlistItem.findMany({
       where: { userId: req.user.id },
       include: {
         product: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            price: true,
-            images: true,
-            stock: true,
-            isActive: true,
-            averageRating: true,
-            totalReviews: true,
-            category: {
-              select: {
-                id: true,
-                name: true,
-                slug: true
-              }
-            }
+          include: {
+            category: true
           }
         }
       },
@@ -31,8 +16,8 @@ export const getWishlist = async (req, res) => {
     })
 
     res.json({
-      wishlistItems,
-      count: wishlistItems.length
+      items: wishlist,
+      total: wishlist.length
     })
   } catch (error) {
     console.error('Get wishlist error:', error)
@@ -45,10 +30,6 @@ export const addToWishlist = async (req, res) => {
   try {
     const { productId } = req.body
 
-    if (!productId) {
-      return res.status(400).json({ error: 'Product ID is required' })
-    }
-
     // Check if product exists
     const product = await prisma.product.findUnique({
       where: { id: productId }
@@ -59,47 +40,37 @@ export const addToWishlist = async (req, res) => {
     }
 
     // Check if already in wishlist
-    const existingItem = await prisma.wishlistItem.findUnique({
+    const existing = await prisma.wishlistItem.findUnique({
       where: {
         userId_productId: {
           userId: req.user.id,
-          productId
+          productId: productId
         }
       }
     })
 
-    if (existingItem) {
-      return res.status(400).json({ 
-        error: 'Product already in wishlist',
-        wishlistItem: existingItem
-      })
+    if (existing) {
+      return res.status(400).json({ error: 'Product already in wishlist' })
     }
 
     // Add to wishlist
     const wishlistItem = await prisma.wishlistItem.create({
       data: {
         userId: req.user.id,
-        productId
+        productId: productId
       },
       include: {
         product: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            price: true,
-            images: true,
-            stock: true
+          include: {
+            category: true
           }
         }
       }
     })
 
-    console.log('✅ Added to wishlist:', product.name)
-
-    res.status(201).json({
+    res.json({
       message: 'Added to wishlist',
-      wishlistItem
+      item: wishlistItem
     })
   } catch (error) {
     console.error('Add to wishlist error:', error)
@@ -112,31 +83,16 @@ export const removeFromWishlist = async (req, res) => {
   try {
     const { productId } = req.params
 
-    // Check if item exists
-    const wishlistItem = await prisma.wishlistItem.findUnique({
+    const deleted = await prisma.wishlistItem.deleteMany({
       where: {
-        userId_productId: {
-          userId: req.user.id,
-          productId
-        }
+        userId: req.user.id,
+        productId: productId
       }
     })
 
-    if (!wishlistItem) {
-      return res.status(404).json({ error: 'Item not in wishlist' })
+    if (deleted.count === 0) {
+      return res.status(404).json({ error: 'Item not found in wishlist' })
     }
-
-    // Remove from wishlist
-    await prisma.wishlistItem.delete({
-      where: {
-        userId_productId: {
-          userId: req.user.id,
-          productId
-        }
-      }
-    })
-
-    console.log('✅ Removed from wishlist')
 
     res.json({ message: 'Removed from wishlist' })
   } catch (error) {
@@ -150,53 +106,33 @@ export const checkWishlist = async (req, res) => {
   try {
     const { productId } = req.params
 
-    const wishlistItem = await prisma.wishlistItem.findUnique({
+    const exists = await prisma.wishlistItem.findUnique({
       where: {
         userId_productId: {
           userId: req.user.id,
-          productId
+          productId: productId
         }
       }
     })
 
-    res.json({
-      inWishlist: !!wishlistItem,
-      wishlistItem
-    })
+    res.json({ inWishlist: !!exists })
   } catch (error) {
     console.error('Check wishlist error:', error)
     res.status(500).json({ error: 'Failed to check wishlist' })
   }
 }
 
-// Clear wishlist
-export const clearWishlist = async (req, res) => {
-  try {
-    await prisma.wishlistItem.deleteMany({
-      where: { userId: req.user.id }
-    })
-
-    console.log('✅ Wishlist cleared')
-
-    res.json({ message: 'Wishlist cleared' })
-  } catch (error) {
-    console.error('Clear wishlist error:', error)
-    res.status(500).json({ error: 'Failed to clear wishlist' })
-  }
-}
-
-// Move wishlist item to cart
+// Move item from wishlist to cart
 export const moveToCart = async (req, res) => {
   try {
     const { productId } = req.params
-    const { quantity = 1, size, color } = req.body
 
-    // Check if item is in wishlist
+    // Check if in wishlist
     const wishlistItem = await prisma.wishlistItem.findUnique({
       where: {
         userId_productId: {
           userId: req.user.id,
-          productId
+          productId: productId
         }
       },
       include: {
@@ -205,43 +141,33 @@ export const moveToCart = async (req, res) => {
     })
 
     if (!wishlistItem) {
-      return res.status(404).json({ error: 'Item not in wishlist' })
+      return res.status(404).json({ error: 'Item not found in wishlist' })
     }
 
-    const product = wishlistItem.product
-
-    // Check stock
-    if (product.stock < quantity) {
-      return res.status(400).json({ 
-        error: `Only ${product.stock} items available in stock` 
-      })
+    // Check if product is in stock
+    if (wishlistItem.product.stock === 0) {
+      return res.status(400).json({ error: 'Product is out of stock' })
     }
 
-    // Add to cart
+    // Add to cart (or update quantity if already in cart)
     const existingCartItem = await prisma.cartItem.findFirst({
       where: {
         userId: req.user.id,
-        productId,
-        size: size || null,
-        color: color || null,
+        productId: productId
       }
     })
 
     if (existingCartItem) {
-      // Update quantity
       await prisma.cartItem.update({
         where: { id: existingCartItem.id },
-        data: { quantity: existingCartItem.quantity + quantity }
+        data: { quantity: existingCartItem.quantity + 1 }
       })
     } else {
-      // Create new cart item
       await prisma.cartItem.create({
         data: {
           userId: req.user.id,
-          productId,
-          quantity,
-          size: size || null,
-          color: color || null,
+          productId: productId,
+          quantity: 1
         }
       })
     }
@@ -251,16 +177,12 @@ export const moveToCart = async (req, res) => {
       where: {
         userId_productId: {
           userId: req.user.id,
-          productId
+          productId: productId
         }
       }
     })
 
-    console.log('✅ Moved to cart:', product.name)
-
-    res.json({
-      message: 'Moved to cart successfully'
-    })
+    res.json({ message: 'Moved to cart successfully' })
   } catch (error) {
     console.error('Move to cart error:', error)
     res.status(500).json({ error: 'Failed to move to cart' })
